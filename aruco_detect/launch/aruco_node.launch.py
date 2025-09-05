@@ -15,12 +15,12 @@ def generate_launch_description():
             output='screen',
             parameters=[
                 {'aruco_type': 'DICT_5X5_100'},
-                {'aruco_length': 0.05},
+                {'aruco_length': 0.06},
                 {'aruco_transforms': transform_file_path},   # ← 상대 경로 대신 share 기반
                 {'aruco_main_marker_id': 0},
                 {'camera_img_topic': '/camera/color/image_raw'},
                 {'camera_info_topic': '/camera/color/camera_info'},
-                {'camera_frame_id': 'camera_color_frame'},
+                {'camera_frame_id': 'camera_color_optical_frame'},
             ]
         )
     ])
