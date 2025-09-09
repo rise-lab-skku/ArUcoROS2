@@ -12,6 +12,7 @@ from geometry_msgs.msg import TransformStamped, Pose
 from sensor_msgs.msg import Image, CameraInfo
 import cv2.aruco as aruco
 from scipy.spatial.transform import Rotation as R
+from geometry_msgs.msg import PoseStamped
 
 
 # -----------------------------
@@ -109,29 +110,24 @@ class ArucoNode(Node):
             marker_id = det["id"]
             pose = det["pose"]
 
-            # TF
-            tf_msg = TransformStamped()
-            tf_msg.header.stamp = now
-            tf_msg.header.frame_id = self.camera_frame_id
-            tf_msg.child_frame_id = f"marker_{marker_id}"
-            tf_msg.transform.translation.x = pose.position.x
-            tf_msg.transform.translation.y = pose.position.y
-            tf_msg.transform.translation.z = pose.position.z
-            tf_msg.transform.rotation = pose.orientation
-            self.tf_broadcaster.sendTransform(tf_msg)
+        # TF
+        tf_msg = TransformStamped()
+        tf_msg.header.stamp = now
+        tf_msg.header.frame_id = self.camera_frame_id
+        tf_msg.child_frame_id = f"aruco_{marker_id}"
+        tf_msg.transform.translation.x = pose.pose.position.x
+        tf_msg.transform.translation.y = pose.pose.position.y
+        tf_msg.transform.translation.z = pose.pose.position.z
+        tf_msg.transform.rotation = pose.pose.orientation
+        self.tf_broadcaster.sendTransform(tf_msg)
 
-            # Dynamic Pose publisher (topic: aruco_<id>)
-            if marker_id not in self.pose_publishers:
-                topic = f"aruco_{marker_id}"
-                self.pose_publishers[marker_id] = self.create_publisher(Pose, topic, 10)
-                self.get_logger().info(f"Created publisher for {topic}")
+        # Pose publisher (topic: aruco_<id>)
+        if marker_id not in self.pose_publishers:
+            topic = f"aruco_{marker_id}"
+            self.pose_publishers[marker_id] = self.create_publisher(PoseStamped, topic, 10)
+            self.get_logger().info(f"Created publisher for {topic}")
 
-            self.pose_publishers[marker_id].publish(pose)
-
-        if self.publish_debug_image:
-            out_msg = self.bridge.cv2_to_imgmsg(annotated, "bgr8")
-            out_msg.header = msg.header
-            self.aruco_pub.publish(out_msg)
+        self.pose_publishers[marker_id].publish(pose)
 
     def _get_dict(self, code):
         if hasattr(aruco, 'getPredefinedDictionary'):
@@ -168,22 +164,25 @@ class ArucoNode(Node):
                 tvec = np.squeeze(tvecs[i])
                 aruco.drawDetectedMarkers(annotated, [corners[i]], ids[i])
                 cv2.drawFrameAxes(annotated, self.K, self.D, rvec, tvec, self.draw_axes_length)
-                pose = self._rvec_tvec_to_pose(rvec, tvec)
+                pose = self._rvec_tvec_to_posestamped(rvec, tvec)
                 detections.append({"id": marker_id, "pose": pose})
         return annotated, detections
 
-    def _rvec_tvec_to_pose(self, rvec, tvec) -> Pose:
+    def _rvec_tvec_to_posestamped(self, rvec, tvec) -> PoseStamped:
         rot = R.from_rotvec(rvec)
         qx, qy, qz, qw = rot.as_quat()
-        pose = Pose()
-        pose.position.x = float(tvec[0])
-        pose.position.y = float(tvec[1])
-        pose.position.z = float(tvec[2])
-        pose.orientation.x = float(qx)
-        pose.orientation.y = float(qy)
-        pose.orientation.z = float(qz)
-        pose.orientation.w = float(qw)
-        return pose
+        pose_stamped = PoseStamped()
+        pose_stamped.header.frame_id = self.camera_frame_id
+        pose_stamped.pose = Pose()
+        pose_stamped.pose.position.x = float(tvec[0])
+        pose_stamped.pose.position.y = float(tvec[1])
+        pose_stamped.pose.position.z = float(tvec[2])
+        pose_stamped.pose.orientation.x = float(qx)
+        pose_stamped.pose.orientation.y = float(qy)
+        pose_stamped.pose.orientation.z = float(qz)
+        pose_stamped.pose.orientation.w = float(qw)
+
+        return pose_stamped
 
 
 def main(args=None):
