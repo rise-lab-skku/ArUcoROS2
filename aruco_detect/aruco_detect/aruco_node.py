@@ -110,24 +110,24 @@ class ArucoNode(Node):
             marker_id = det["id"]
             pose = det["pose"]
 
-        # TF
-        tf_msg = TransformStamped()
-        tf_msg.header.stamp = now
-        tf_msg.header.frame_id = self.camera_frame_id
-        tf_msg.child_frame_id = f"aruco_{marker_id}"
-        tf_msg.transform.translation.x = pose.pose.position.x
-        tf_msg.transform.translation.y = pose.pose.position.y
-        tf_msg.transform.translation.z = pose.pose.position.z
-        tf_msg.transform.rotation = pose.pose.orientation
-        self.tf_broadcaster.sendTransform(tf_msg)
+            # TF 메시지 생성
+            tf_msg = TransformStamped()
+            tf_msg.header.stamp = now
+            tf_msg.header.frame_id = self.camera_frame_id
+            tf_msg.child_frame_id = f"aruco_{marker_id}"
+            tf_msg.transform.translation.x = pose.pose.position.x
+            tf_msg.transform.translation.y = pose.pose.position.y
+            tf_msg.transform.translation.z = pose.pose.position.z
+            tf_msg.transform.rotation = pose.pose.orientation
+            self.tf_broadcaster.sendTransform(tf_msg)
 
-        # Pose publisher (topic: aruco_<id>)
-        if marker_id not in self.pose_publishers:
-            topic = f"aruco_{marker_id}"
-            self.pose_publishers[marker_id] = self.create_publisher(PoseStamped, topic, 10)
-            self.get_logger().info(f"Created publisher for {topic}")
+            # Pose publisher
+            if marker_id not in self.pose_publishers:
+                topic = f"aruco_{marker_id}"
+                self.pose_publishers[marker_id] = self.create_publisher(PoseStamped, topic, 10)
+                self.get_logger().info(f"Created publisher for {topic}")
 
-        self.pose_publishers[marker_id].publish(pose)
+            self.pose_publishers[marker_id].publish(pose)
 
     def _get_dict(self, code):
         if hasattr(aruco, 'getPredefinedDictionary'):
