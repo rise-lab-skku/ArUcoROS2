@@ -113,7 +113,8 @@ class ArucoNode(Node):
             # TF 메시지 생성
             tf_msg = TransformStamped()
             tf_msg.header.stamp = now
-            tf_msg.header.frame_id = self.camera_frame_id
+            # tf_msg.header.frame_id = self.camera_frame_id
+            tf_msg.header.frame_id = "camera_calib_frame"  # calib frame 기준
             tf_msg.child_frame_id = f"aruco_{marker_id}"
             tf_msg.transform.translation.x = pose.pose.position.x
             tf_msg.transform.translation.y = pose.pose.position.y
@@ -173,6 +174,7 @@ class ArucoNode(Node):
         qx, qy, qz, qw = rot.as_quat()
         pose_stamped = PoseStamped()
         pose_stamped.header.frame_id = self.camera_frame_id
+        pose_stamped.header.stamp = self.get_clock().now().to_msg()
         pose_stamped.pose = Pose()
         pose_stamped.pose.position.x = float(tvec[0])
         pose_stamped.pose.position.y = float(tvec[1])

@@ -8,7 +8,6 @@
 
   <buildtool_depend>ament_python</buildtool_depend>
 
-  <!-- 런타임 의존 -->
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
@@ -17,7 +16,6 @@
   <exec_depend>image_transport</exec_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>
 
-  <!-- 인터페이스 패키지 사용 -->
   <depend>aruco_interfaces</depend>
 
   <export>
