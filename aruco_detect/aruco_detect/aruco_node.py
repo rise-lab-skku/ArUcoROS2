@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import rclpy
 from rclpy.node import Node
-import tf2_ros
+
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import TransformStamped, Pose
 from sensor_msgs.msg import Image, CameraInfo
@@ -35,7 +35,7 @@ ARUCO_DICT = {
     "DICT_7X7_100": aruco.DICT_7X7_100,
     "DICT_7X7_250": aruco.DICT_7X7_250,
     "DICT_7X7_1000": aruco.DICT_7X7_1000,
-    "DICT_ARUCO_ORIGINAL": aruco.DICT_ARUCO_ORIGINAL
+    "DICT_ARUCO_ORIGINAL": aruco.DICT_ARUCO_ORIGINAL,
 }
 
 
@@ -46,31 +46,31 @@ class ArucoNode(Node):
     """
 
     def __init__(self):
-        super().__init__('aruco_marker_detect')
+        super().__init__("aruco_marker_detect")
 
         # Parameters
-        self.declare_parameter('aruco_type', 'DICT_6X6_100')
-        self.declare_parameter('aruco_length', 0.0489)
-        self.declare_parameter('camera_img_topic', '/camera/rgb/image_raw')
-        self.declare_parameter('camera_info_topic', '/camera/rgb/camera_info')
-        self.declare_parameter('camera_frame_id', 'rgb_camera_link')
-        self.declare_parameter('publish_debug_image', True)
-        self.declare_parameter('draw_axes_length', 0.03)
+        self.declare_parameter("aruco_type", "DICT_6X6_100")
+        self.declare_parameter("aruco_length", 0.0489)
+        self.declare_parameter("camera_img_topic", "camera/rgb/image_raw")
+        self.declare_parameter("camera_info_topic", "camera/rgb/camera_info")
+        self.declare_parameter("camera_frame_id", "rgb_camera_link")
+        self.declare_parameter("publish_debug_image", True)
+        self.declare_parameter("draw_axes_length", 0.03)
 
         # Get parameters
-        self.marker_type = self.get_parameter('aruco_type').get_parameter_value().string_value
-        self.marker_size = self.get_parameter('aruco_length').get_parameter_value().double_value
-        self.camera_img_topic = self.get_parameter('camera_img_topic').get_parameter_value().string_value
-        self.camera_info_topic = self.get_parameter('camera_info_topic').get_parameter_value().string_value
-        self.camera_frame_id = self.get_parameter('camera_frame_id').get_parameter_value().string_value
-        self.publish_debug_image = self.get_parameter('publish_debug_image').get_parameter_value().bool_value
-        self.draw_axes_length = self.get_parameter('draw_axes_length').get_parameter_value().double_value
+        self.marker_type = self.get_parameter("aruco_type").get_parameter_value().string_value
+        self.marker_size = self.get_parameter("aruco_length").get_parameter_value().double_value
+        self.camera_img_topic = self.get_parameter("camera_img_topic").get_parameter_value().string_value
+        self.camera_info_topic = self.get_parameter("camera_info_topic").get_parameter_value().string_value
+        self.camera_frame_id = self.get_parameter("camera_frame_id").get_parameter_value().string_value
+        self.publish_debug_image = self.get_parameter("publish_debug_image").get_parameter_value().bool_value
+        self.draw_axes_length = self.get_parameter("draw_axes_length").get_parameter_value().double_value
 
         # Publishers
         self.bridge = CvBridge()
         if self.publish_debug_image:
             self.aruco_pub = self.create_publisher(Image, "aruco_img", 10)
-        self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
+        # self.tf_broadcaster = tf2_ros.TransformBroadcaster(self)
 
         # Dynamic publishers for each marker ID
         self.pose_publishers = {}  # id -> Publisher(Pose)
@@ -110,17 +110,17 @@ class ArucoNode(Node):
             marker_id = det["id"]
             pose = det["pose"]
 
-            # TF 메시지 생성
-            tf_msg = TransformStamped()
-            tf_msg.header.stamp = now
-            # tf_msg.header.frame_id = self.camera_frame_id
-            tf_msg.header.frame_id = "camera_calib_frame"  # calib frame 기준
-            tf_msg.child_frame_id = f"aruco_{marker_id}"
-            tf_msg.transform.translation.x = pose.pose.position.x
-            tf_msg.transform.translation.y = pose.pose.position.y
-            tf_msg.transform.translation.z = pose.pose.position.z
-            tf_msg.transform.rotation = pose.pose.orientation
-            self.tf_broadcaster.sendTransform(tf_msg)
+            # # TF 메시지 생성
+            # tf_msg = TransformStamped()
+            # tf_msg.header.stamp = now
+            # # tf_msg.header.frame_id = self.camera_frame_id
+            # tf_msg.header.frame_id = "camera_calib_frame"  # calib frame 기준
+            # tf_msg.child_frame_id = f"aruco_{marker_id}"
+            # tf_msg.transform.translation.x = pose.pose.position.x
+            # tf_msg.transform.translation.y = pose.pose.position.y
+            # tf_msg.transform.translation.z = pose.pose.position.z
+            # tf_msg.transform.rotation = pose.pose.orientation
+            # self.tf_broadcaster.sendTransform(tf_msg)
 
             # Pose publisher
             if marker_id not in self.pose_publishers:
@@ -131,12 +131,12 @@ class ArucoNode(Node):
             self.pose_publishers[marker_id].publish(pose)
 
     def _get_dict(self, code):
-        if hasattr(aruco, 'getPredefinedDictionary'):
+        if hasattr(aruco, "getPredefinedDictionary"):
             return aruco.getPredefinedDictionary(code)
         return aruco.Dictionary_get(code)
 
     def _get_params_and_detector(self, aruco_dict):
-        new_api = hasattr(aruco, 'ArucoDetector') and hasattr(aruco, 'DetectorParameters')
+        new_api = hasattr(aruco, "ArucoDetector") and hasattr(aruco, "DetectorParameters")
         if new_api:
             params = aruco.DetectorParameters()
             detector = aruco.ArucoDetector(aruco_dict, params)
@@ -199,5 +199,5 @@ def main(args=None):
         rclpy.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
